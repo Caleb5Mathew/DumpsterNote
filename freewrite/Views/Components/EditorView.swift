@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct EditorView: View {
-    @EnvironmentObject var viewModel: ContentViewModel 
+    @EnvironmentObject var viewModel: ContentViewModel
     
     @Binding var text: String
     @Binding var selectedFont: String
@@ -9,57 +9,62 @@ struct EditorView: View {
     @Binding var colorSchemeString: String
     var editorFocus: FocusState<Bool>.Binding
 
-    // Compute necessary values based on props
+    // Calculate line height for spacing
     private var lineHeight: CGFloat {
         #if os(macOS)
-        // Simplified calculation, consider passing if complex
         let font = NSFont(name: selectedFont, size: fontSize) ?? .systemFont(ofSize: fontSize)
-        return font.pointSize * 0.5 // Adjust line spacing factor if needed
+        return font.pointSize * 0.5
         #elseif os(iOS)
         let font = UIFont(name: selectedFont, size: fontSize) ?? .systemFont(ofSize: fontSize)
-        return font.lineHeight * 0.5 
+        return font.lineHeight * 0.5
         #endif
     }
-    
-    // TextEditor internal horizontal padding
+
+    // Use fontSize for body text
+    private var bodyFontSize: CGFloat { fontSize }
+
+    // Padding inside the TextEditor
     private let textEditorHPadding: CGFloat = 15
-    // TextEditor internal vertical padding
     private let textEditorVPadding: CGFloat = 10
 
-    // Helper to determine if the current theme is light-based
+    // Determine light themes for shadow contrast
     private var isLightBasedTheme: Bool {
-        return colorSchemeString == "light" || colorSchemeString == "sepia" || colorSchemeString == "dracula_lite"
+        colorSchemeString == "light" || colorSchemeString == "sepia" || colorSchemeString == "dracula_lite"
     }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            TextEditor(text: Binding(
-                get: { text },
-                set: { newValue in
-                    text = newValue
-                }
-            ))
+            // Placeholder when empty
+            if text.isEmpty {
+                Text("What’s on your mind today?")
+                    .font(.system(size: bodyFontSize, weight: .light))
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, textEditorHPadding + 4)
+                    .padding(.vertical, textEditorVPadding + 8)
+            }
+
+            // Main editor
+            TextEditor(text: $text)
                 #if os(iOS)
-                .background(Color.clear) 
+                .background(Color.clear)
                 #endif
                 .focused(editorFocus)
-                .font(.custom(selectedFont, size: fontSize))
+                .font(.system(size: bodyFontSize, weight: .light))
                 .foregroundColor(BrandColors.primaryText(for: colorSchemeString))
-                .modifier(ScrollCleanupModifier()) 
+                .modifier(ScrollCleanupModifier())
                 .lineSpacing(lineHeight)
                 .id("Editor-\(selectedFont)-\(fontSize)-\(colorSchemeString)")
                 .padding(.horizontal, textEditorHPadding)
                 .padding(.vertical, textEditorVPadding)
-
         }
         .background(
-            RoundedRectangle(cornerRadius: 15) 
+            RoundedRectangle(cornerRadius: 15)
                 .fill(BrandColors.secondaryBackground(for: colorSchemeString))
                 .shadow(color: Color.black.opacity(isLightBasedTheme ? 0.08 : 0.2), radius: 4, x: 0, y: 2)
         )
-        .padding(.horizontal, 20) 
-        .padding(.top, 30)        
-        .padding(.bottom, 10)     
+        .padding(.horizontal, 20)
+        .padding(.top, 30)
+        .padding(.bottom, 10)
     }
 }
 
